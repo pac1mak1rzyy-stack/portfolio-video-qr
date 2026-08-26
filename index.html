@@ -9,38 +9,25 @@
   body { display: flex; align-items: center; justify-content: center; }
   .wrap { width: 100%; max-width: 480px; position: relative; }
   video { width: 100%; height: auto; display: block; background: #000; }
-  /* 中性点击播放兜底层：仅当浏览器拦截自动播放时显示 */
-  #overlay {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.35); cursor: pointer; z-index: 5;
-  }
+  #overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.35); cursor: pointer; z-index: 5; }
   #overlay.hidden { display: none; }
-  #overlay .play {
-    width: 72px; height: 72px; border-radius: 50%;
-    background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center;
-  }
-  #overlay .play::before {
-    content: ""; width: 0; height: 0; margin-left: 6px;
-    border-left: 24px solid #111; border-top: 15px solid transparent; border-bottom: 15px solid transparent;
-  }
+  #overlay .play { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: center; }
+  #overlay .play::before { content: ""; width: 0; height: 0; margin-left: 6px; border-left: 24px solid #111; border-top: 15px solid transparent; border-bottom: 15px solid transparent; }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <video id="vid" src="final.mp4" controls autoplay muted loop playsinline poster="poster.jpg" preload="auto"></video>
+    <video id="vid" controls autoplay muted loop playsinline poster="poster.jpg" preload="auto">
+      <source src="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@main/final.mp4" type="video/mp4">
+      <source src="final.mp4" type="video/mp4">
+    </video>
     <div id="overlay"><div class="play"></div></div>
   </div>
   <script>
     const vid = document.getElementById('vid');
     const overlay = document.getElementById('overlay');
-    // 尝试自动播放（已 muted，手机通常允许）
-    vid.play().then(() => { overlay.classList.add('hidden'); }).catch(() => {
-      // 被拦截：显示点击播放层
-      overlay.classList.remove('hidden');
-    });
-    // 用户点击兜底层：开始播放（点一下即可，暂停由原生控件控制）
+    vid.play().then(() => overlay.classList.add('hidden')).catch(() => overlay.classList.remove('hidden'));
     overlay.addEventListener('click', () => { vid.play(); overlay.classList.add('hidden'); });
-    // 播放开始后确保兜底层隐藏
     vid.addEventListener('playing', () => overlay.classList.add('hidden'));
   </script>
 </body>
