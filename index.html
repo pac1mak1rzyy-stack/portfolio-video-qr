@@ -19,8 +19,6 @@
     position: relative;
     width: 100%;
     height: 100%;
-    max-width: 100vw;
-    max-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,85 +32,25 @@
     background: #000;
     display: block;
   }
-  /* 自动播放被拦截时的中性点击播放层（点一下播放/暂停，无声音按钮） */
-  #overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.35);
-    cursor: pointer;
-    z-index: 2;
-  }
-  #overlay.hidden { display: none; }
-  #overlay .play {
-    width: 84px; height: 84px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.92);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  #overlay .play::before {
-    content: "";
-    display: block;
-    width: 0; height: 0;
-    margin-left: 6px;
-    border-style: solid;
-    border-width: 18px 0 18px 30px;
-    border-color: transparent transparent transparent #111;
-  }
-  .hint {
-    position: absolute;
-    bottom: 18px; left: 0; right: 0;
-    text-align: center;
-    color: rgba(255,255,255,0.55);
-    font-size: 13px;
-    z-index: 3;
-    pointer-events: none;
-  }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <video id="vid" src="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/final.mp4" poster="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/poster.jpg"
-           autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
-    <div id="overlay" class="hidden">
-      <div class="play"></div>
-    </div>
-    <div class="hint">点击画面播放 / 暂停 · 点控制条喇叭可开声音</div>
+    <video id="vid"
+      src="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/final.mp4"
+      poster="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/poster.jpg"
+      controls autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
   </div>
   <script>
     (function () {
       var vid = document.getElementById('vid');
-      var overlay = document.getElementById('overlay');
-
       function tryPlay() {
         var p = vid.play();
-        if (p && p.then) {
-          p.then(function () { overlay.classList.add('hidden'); })
-           .catch(function () { overlay.classList.remove('hidden'); });
-        }
+        if (p && p.catch) { p.catch(function () {}); }
       }
-
-      // 自动播放被拦截时显示点击层
-      vid.addEventListener('error', function () { overlay.classList.remove('hidden'); });
+      // 能自动播就秒播；被拦截时用户点原生控件上的播放键即可
       tryPlay();
-
-      // 点击遮罩层：播放并隐藏
-      overlay.addEventListener('click', function () {
-        tryPlay();
-      });
-
-      // 点画面：切换播放/暂停（暂停就是暂停，无声音按钮）
-      vid.addEventListener('click', function () {
-        if (vid.paused) {
-          vid.play();
-          overlay.classList.add('hidden');
-        } else {
-          vid.pause();
-        }
-      });
+      vid.addEventListener('canplay', function () { tryPlay(); }, { once: true });
     })();
   </script>
 </body>
