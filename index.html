@@ -1,57 +1,70 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>作品集视频</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    height: 100%;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  }
-  .wrap {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  video {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    background: #000;
-    display: block;
-  }
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+  #wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+  video{width:100%;height:100%;object-fit:contain;background:#000;}
+  #spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:14px;background:rgba(0,0,0,.35);transition:opacity .3s;z-index:2;}
+  #spinner.hide{opacity:0;pointer-events:none;}
+  .ring{width:32px;height:32px;margin-right:10px;border:3px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #err{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#ffd0d0;
+    font-size:13px;line-height:1.5;padding:0 20px;display:none;z-index:3;}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <video id="vid"
-      src="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/final.mp4"
-      poster="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@378c12daf2ca34d30165955452d608ef30770ab2/poster.jpg"
-      controls autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
-  </div>
-  <script>
-    (function () {
-      var vid = document.getElementById('vid');
-      function tryPlay() {
-        var p = vid.play();
-        if (p && p.catch) { p.catch(function () {}); }
-      }
-      // 能自动播就秒播；被拦截时用户点原生控件上的播放键即可
-      tryPlay();
-      vid.addEventListener('canplay', function () { tryPlay(); }, { once: true });
-    })();
-  </script>
+<div id="wrap">
+  <video id="vid" controls autoplay muted loop playsinline preload="auto"
+    poster="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@2dc7d290d9650bdce629e08a49ec6338369cfd6b/poster.jpg">
+    您的浏览器不支持视频播放，请升级浏览器。
+  </video>
+  <div id="spinner"><div class="ring"></div><span>视频加载中…</span></div>
+  <div id="err"></div>
+</div>
+<script>
+  var VIDEO = "https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@2dc7d290d9650bdce629e08a49ec6338369cfd6b/final.mp4";
+  var FALLBACK = "https://pac1mak1rzyy-stack.github.io/portfolio-video-qr/final.mp4";
+  var vid = document.getElementById('vid');
+  var spin = document.getElementById('spinner');
+  var err = document.getElementById('err');
+  var triedFallback = false;
+
+  function hideSpin(){ spin.classList.add('hide'); }
+
+  vid.addEventListener('playing', hideSpin);
+  vid.addEventListener('error', function(){
+    if(!triedFallback){
+      triedFallback = true;
+      err.style.display = 'block';
+      err.textContent = '主线路较慢，正在切换备用线路…';
+      vid.src = FALLBACK;
+      vid.load();
+      vid.play().catch(function(){});
+    } else {
+      err.textContent = '视频加载失败，请检查网络后刷新页面重试。';
+    }
+  });
+
+  // 8 秒仍未可播，主动切备用线路
+  setTimeout(function(){
+    if(!triedFallback && vid.readyState < 3){
+      triedFallback = true;
+      err.style.display = 'block';
+      err.textContent = '主线路较慢，正在切换备用线路…';
+      vid.src = FALLBACK;
+      vid.load();
+      vid.play().catch(function(){});
+    }
+  }, 8000);
+
+  vid.play().catch(function(){}); // 自动播放被拦截则等用户点播放键
+</script>
 </body>
 </html>
