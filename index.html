@@ -1,70 +1,114 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>作品集视频</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>作品集 · 动效演示</title>
 <style>
-  html,body{margin:0;height:100%;background:#000;overflow:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
-  #wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
-  video{width:100%;height:100%;object-fit:contain;background:#000;}
-  #spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    color:#fff;font-size:14px;background:rgba(0,0,0,.35);transition:opacity .3s;z-index:2;}
-  #spinner.hide{opacity:0;pointer-events:none;}
-  .ring{width:32px;height:32px;margin-right:10px;border:3px solid rgba(255,255,255,.3);
-    border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #err{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#ffd0d0;
-    font-size:13px;line-height:1.5;padding:0 20px;display:none;z-index:3;}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  #wrap {
+    position: relative;
+    width: 100vw; max-width: 560px;
+    height: 100vh; max-height: 100vh;
+    background: #000;
+  }
+  video {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+    display: block;
+  }
+  #loader {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; gap: 16px;
+    align-items: center; justify-content: center;
+    color: rgba(255,255,255,.75); font-size: 14px; letter-spacing: 1px;
+    background: #000; z-index: 5;
+    transition: opacity .4s ease;
+  }
+  #loader.hide { opacity: 0; pointer-events: none; }
+  .spin {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.15); border-top-color: rgba(255,255,255,.8);
+    animation: sp .8s linear infinite;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <video id="vid" controls autoplay muted loop playsinline preload="auto"
-    poster="https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@2dc7d290d9650bdce629e08a49ec6338369cfd6b/poster.jpg">
-    您的浏览器不支持视频播放，请升级浏览器。
-  </video>
-  <div id="spinner"><div class="ring"></div><span>视频加载中…</span></div>
-  <div id="err"></div>
+  <video id="vid" controls muted autoplay loop playsinline webkit-playsinline preload="auto"
+         poster="https://fastly.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@ffee48b5f87f5fddf2320d8d00283fed33fc25a2/poster.jpg"></video>
+  <div id="loader"><div class="spin"></div><div>视频加载中…</div></div>
 </div>
 <script>
-  var VIDEO = "https://cdn.jsdelivr.net/gh/pac1mak1rzyy-stack/portfolio-video-qr@2dc7d290d9650bdce629e08a49ec6338369cfd6b/final.mp4";
-  var FALLBACK = "https://pac1mak1rzyy-stack.github.io/portfolio-video-qr/final.mp4";
+(function () {
+  var PIN = 'ffee48b5f87f5fddf2320d8d00283fed33fc25a2';
+  var GH = 'pac1mak1rzyy-stack/portfolio-video-qr';
+  // 多线路竞速：谁先返回数据就用谁
+  var CANDIDATES = [
+    'https://gcore.jsdelivr.net/gh/' + GH + '@' + PIN + '/final.mp4',
+    'https://cdn.jsdelivr.net/gh/' + GH + '@' + PIN + '/final.mp4',
+    'https://fastly.jsdelivr.net/gh/' + GH + '@' + PIN + '/final.mp4',
+    'https://testingcf.jsdelivr.net/gh/' + GH + '@' + PIN + '/final.mp4',
+    'https://pac1mak1rzyy-stack.github.io/portfolio-video-qr/final.mp4'
+  ];
+
   var vid = document.getElementById('vid');
-  var spin = document.getElementById('spinner');
-  var err = document.getElementById('err');
-  var triedFallback = false;
+  var loader = document.getElementById('loader');
+  var done = false;
 
-  function hideSpin(){ spin.classList.add('hide'); }
+  function useSrc(url) {
+    if (done) return;
+    done = true;
+    vid.src = url;
+    vid.load();
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+    hideLoaderSoon();
+  }
 
-  vid.addEventListener('playing', hideSpin);
-  vid.addEventListener('error', function(){
-    if(!triedFallback){
-      triedFallback = true;
-      err.style.display = 'block';
-      err.textContent = '主线路较慢，正在切换备用线路…';
-      vid.src = FALLBACK;
-      vid.load();
-      vid.play().catch(function(){});
-    } else {
-      err.textContent = '视频加载失败，请检查网络后刷新页面重试。';
-    }
+  function hideLoaderSoon() {
+    // 拿到可播放数据就隐藏 loader
+    var onHide = function () { loader.classList.add('hide'); };
+    vid.addEventListener('loadeddata', onHide, { once: true });
+    vid.addEventListener('canplay', onHide, { once: true });
+    setTimeout(onHide, 9000); // 兜底
+  }
+
+  function probe(url) {
+    return fetch(url, {
+      method: 'GET',
+      headers: { 'Range': 'bytes=0-1023' },
+      cache: 'no-store',
+      referrerPolicy: 'no-referrer'
+    }).then(function (r) {
+      if (r.ok || r.status === 206) return url;
+      throw new Error('status ' + r.status);
+    });
+  }
+
+  // 竞速：任一成功即用；全部失败则依次串行兜底
+  var timeout = function (p, ms) {
+    return Promise.race([
+      p,
+      new Promise(function (_, rej) { setTimeout(function () { rej(new Error('timeout')); }, ms); })
+    ]);
+  };
+
+  CANDIDATES.forEach(function (url) {
+    timeout(probe(url), 5000).then(function (u) { useSrc(u); }).catch(function () {});
   });
 
-  // 8 秒仍未可播，主动切备用线路
-  setTimeout(function(){
-    if(!triedFallback && vid.readyState < 3){
-      triedFallback = true;
-      err.style.display = 'block';
-      err.textContent = '主线路较慢，正在切换备用线路…';
-      vid.src = FALLBACK;
-      vid.load();
-      vid.play().catch(function(){});
-    }
-  }, 8000);
-
-  vid.play().catch(function(){}); // 自动播放被拦截则等用户点播放键
+  // 全部超时的兜底：12秒后直接用同源 github.io 地址
+  setTimeout(function () { useSrc(CANDIDATES[CANDIDATES.length - 1]); }, 12000);
+})();
 </script>
 </body>
 </html>
